@@ -1,0 +1,74 @@
+---
+title: "Assessment_4"
+author: "mcgrathjes"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Part 1 - Importing files, data wrangling, mathematical operations, plots and saving code on GitHub
+
+The file “gene_expression.tsv” contains RNA-seq count data for three samples of interest. The following report will read in files from a public github repository <https://github.com/ghazkha/Assessment4.git>, configure rows and columns and analyse the data for several parameters.
+
+### 1. Read in the file and make gene identifiers the row names
+Using raw data from <https://github.com/ghazkha/Assessment4.git>, we will download the file "gene_expression.tsv" and set the row names as the gene identifiers which are listed in the first column `row.names=1` under the heading "Name_Description", eg. ENSG00000223972.5_DDX11L1. 
+
+The following table shows values for the first six genes.
+```{r}
+URL="https://raw.githubusercontent.com/ghazkha/Assessment4/refs/heads/main/gene_expression.tsv"
+gene_expression <- read.table(URL,stringsAsFactors = FALSE, header=TRUE, row.names=1)
+head(gene_expression, 6)
+```
+
+## 2. Make a new column which is the mean of the other columns
+Column 4 "Mean_Count" is added to the table with rounding to 3 significant figures and saved as a new variable.
+
+The following table shows values for the first six genes.
+```{r}
+gene_expression$Mean_Count <- signif(rowMeans(gene_expression), 3)
+Mean_Count <- gene_expression$Mean_Count
+head(gene_expression, 6)
+```
+
+## 3. List the 10 genes with the highest mean expression
+Using the new Mean_Count variable, we create a new data frame subset called "mean_table" comprised of gene identifiers and their mean count values. We then order the data from largest to smallest mean value and display the top 10 genes with highest mean expression. 
+```{r}
+mean_table <- data.frame(Gene = rownames(gene_expression), Mean_Count = Mean_Count)
+top10_genes <- mean_table[order(-mean_table$Mean_Count), ][1:10, ]
+top10_genes
+```
+## 4. Determine the number of genes with a mean <10
+We will create a subset called "low_mean" that contains all data with a Mean_count of less than 10. By counting the rows in this subset, we can see that there are 35,988 genes with a mean <10.
+```{r}
+low_mean <- subset(gene_expression, Mean_Count < 10)
+nrow(low_mean)
+```
+## 5. Make a histogram plot of the mean values
+Considering the large number of genes with a mean <10, we evaluate the summary statistics of numeric vector "Mean_Count" to assess appropriate histogram parameters. 
+
+```{r}
+str(Mean_Count)
+summary(Mean_Count)
+```
+We can see that there is a large range of values from 0.00 to 529,000 in this data set. There is a significant right skew demonstrated by the lower half of the genes (Min-Median) having a range of 0.00-1.33 and the upper half of the genes (Median-Max) extending from 1.33 to 529,000.
+
+Due to these characteristics, it is appropriate to log10 transform the data to visually display a histogram of this data as described by Love et al. (2022). As we have known values of 0 in our data set, we add "+1" to the log transformation.
+
+Love, M.I., Anders, S., Kim, V. and Huber, W., 2022. RNA-seq workflow: gene-level exploratory analysis and differential expression. F1000Research, 4, p.1070. https://doi.org/10.12688/f1000research.7037.2
+```{r}
+hist(log10(Mean_Count + 1),
+     breaks = 30,
+     main = "Distribution of Log10-Transformed Mean Gene Expression",
+     xlab = "log10(Mean Expression + 1)",
+     col = "skyblue",
+     border = "white")
+
+```
+
+
+
+```
+
