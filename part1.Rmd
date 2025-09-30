@@ -1,5 +1,5 @@
 ---
-title: "Assessment_4"
+title: "Part 1 - Gene expression mean analysis"
 author: "mcgrathjes"
 date: "`r Sys.Date()`"
 output: html_document
