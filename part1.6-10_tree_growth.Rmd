@@ -1,0 +1,42 @@
+---
+title: "Part 1 - Tree growth calculations"
+author: "mcgrathjes"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Part 1 - Importing files, data wrangling, mathematical operations, plots and saving code on GitHub
+
+The file “growth_data.csv” contains measurements for tree circumference growing at two sites, control site and treatment site which were planted 20 years ago.
+
+### 6. Import this csv file into an R object. What are the column names?
+Using raw data file from public repository previously listed, the "growth_data" csv file is imported to the project for analysis. 
+
+The column names are listed as follows:
+```{r}
+URL="https://raw.githubusercontent.com/ghazkha/Assessment4/refs/heads/main/growth_data.csv"
+ 
+growth <- read.csv(URL)
+cat(colnames(growth), sep = "\n")
+
+```
+### 7. Calculate the mean and standard deviation of tree circumference at the start and end of the study at both sites.
+Using column 3 "Circumf_2005_cm" as the **start of the study**, and column 6 "Circumf_2020_cm" as the **end of the study**, we calculate the mean and standard deviation grouped by the two study sites: "northeast" and "southwest".
+
+```{r}
+
+
+```
+
+
+### 8. Make a box plot of tree circumference at the start and end of the study at both sites.
+
+
+### 9. Calculate the mean growth over the last 10 years at each site.
+
+
+### 10. Use the t.test to estimate the p-value that the 10 year growth is different at the two sites.
