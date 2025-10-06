@@ -11,13 +11,13 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Part 1 - Importing files, data wrangling, mathematical operations, plots and saving code on GitHub
 
-The file “growth_data.csv” contains measurements for tree circumference growing at two sites, control site and treatment site which were planted 20 years ago.
+The file “growth_data.csv” contains tree circumference measurements for two growth sites, "control site" and "treatment site" as measured over 5 year intervals.
 
 ### 6. Import this csv file into an R object. What are the column names?
 Using raw data file from public repository previously listed, the "growth_data" csv file is imported to the project for analysis. 
 
 The column names are listed as follows:
-```{r}
+```{r, echo=FALSE}
 URL="https://raw.githubusercontent.com/ghazkha/Assessment4/refs/heads/main/growth_data.csv"
  
 growth <- read.csv(URL)
@@ -25,18 +25,84 @@ cat(colnames(growth), sep = "\n")
 
 ```
 ### 7. Calculate the mean and standard deviation of tree circumference at the start and end of the study at both sites.
-Using column 3 "Circumf_2005_cm" as the **start of the study**, and column 6 "Circumf_2020_cm" as the **end of the study**, we calculate the mean and standard deviation grouped by the two study sites: "northeast" and "southwest".
+Using column 3 "Circumf_2005_cm" as the **start of the study**, and column 6 "Circumf_2020_cm" as the **end of the study**, we calculate the mean and standard deviation grouped by the two study sites: "northeast" and "southwest" using **tapply**.
 
-```{r}
+```{r, echo=FALSE}
+# Mean circumference at start and end by site
+mean_start <- tapply(growth$Circumf_2005_cm, growth$Site, mean)
+mean_end <- tapply(growth$Circumf_2020_cm, growth$Site, mean)
 
+# Standard deviation at start and end by site
+sd_start <- tapply(growth$Circumf_2005_cm, growth$Site, sd)
+sd_end <- tapply(growth$Circumf_2020_cm, growth$Site, sd)
+
+# Combine into one table
+summary_table <- data.frame(
+  Site = names(mean_start),
+  Mean_2005 = mean_start,
+  SD_2005 = sd_start,
+  Mean_2020 = mean_end,
+  SD_2020 = sd_end
+)
+knitr::kable(summary_table, caption = "Mean and SD of tree circumference at start and end of study")
 
 ```
+
+**Start of the study - 2005**
+The mean tree circumference at the start of the study was 5.29cm with a standard deviation of 0.91 at the northeast site. 
+
+The mean circumference at the start of the study was 4.86cm with a standard deviation of 1.14 at the southwest site.
+
+**End of the study - 2020**
+The mean tree circumference at the end of the study was 54.23cm with a standard deviation of 25.23 at the northeast site. 
+
+The mean circumference at the end of the study was 45.60cm with a standard deviation of 17.87 at the southwest site.
 
 
 ### 8. Make a box plot of tree circumference at the start and end of the study at both sites.
 
+The following two boxplots show the tree circumference at the start of the study in 2005 at the northeast and southwest sites.
+
+```{r, echo=FALSE}
+boxplot(Circumf_2005_cm ~ Site, data = growth,
+        main = "Tree circumference at start of study (2005)",
+        ylab = "Circumference (cm)")
+```
+
+The following two boxplots show the tree circumference at the end of the study in 2020 at the northeast and southwest sites.
+```{r, echo=FALSE}
+boxplot(Circumf_2020_cm ~ Site, data = growth,
+        main = "Tree circumference at end of study (2020)",
+        ylab = "Circumference (cm)")
+
+```
+
 
 ### 9. Calculate the mean growth over the last 10 years at each site.
 
+We will first calculate the total growth between 2010 and 2020 (last 10 years).
+
+We can then calculate the mean for each site using **tapply**.
+
+```{r, echo=FALSE}
+# Calculate 10-year growth
+growth$Growth_10yr <- growth$Circumf_2020_cm - growth$Circumf_2010_cm
+
+# Mean growth per site
+mean_growth <- tapply(growth$Growth_10yr, growth$Site, mean)
+mean_growth
+
+```
+
+The mean growth over the last 10 years at the northeast site was 42.94cm which was greater than the southwest site which had a mean growth of 35.49cm.
 
 ### 10. Use the t.test to estimate the p-value that the 10 year growth is different at the two sites.
+
+Using a two-sample t-test, we evaluate the 10 year growth difference to get a p-value of:
+
+```{r, echo=FALSE}
+t_test_result <- t.test(Growth_10yr ~ Site, data = growth)
+t_test_result$p.value
+```
+
+As p = 0.06 which is greater than 0.05, the growth difference is **not** considered to be significantly different between the two sites.
