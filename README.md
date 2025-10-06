@@ -17,6 +17,8 @@ There are 3 main topics addressed in this project:
 ### Part 2
 3. Examination of biological sequence diversity
 
+The "Submission_file" is a combination of all Parts for knitting together a single report.
+
 ## Acknowledgements
 
 **Tertiary Institute:** Deakin University

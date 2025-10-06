@@ -1,0 +1,408 @@
+---
+title: "Submission File"
+author: "mcgrathjes"
+date: "`r Sys.Date()`"
+output: html_document
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Part 1
+
+## Part 1 - Gene expression mean analysis
+
+The file “gene_expression.tsv” contains RNA-seq count data for three samples of interest. The following report will read in files from a public github repository <https://github.com/ghazkha/Assessment4.git>, configure rows and columns and analyse the data for several parameters.
+
+### 1. Read in the file and make gene identifiers the row names
+Using raw data from <https://github.com/ghazkha/Assessment4.git>, we will download the file "gene_expression.tsv" and set the row names as the gene identifiers which are listed in the first column `row.names=1` under the heading "Name_Description", eg. ENSG00000223972.5_DDX11L1. 
+
+The following table shows values for the first six genes.
+```{r, echo=FALSE}
+URL="https://raw.githubusercontent.com/ghazkha/Assessment4/refs/heads/main/gene_expression.tsv"
+gene_expression <- read.table(URL,stringsAsFactors = FALSE, header=TRUE, row.names=1)
+head(gene_expression, 6)
+```
+
+### 2. Make a new column which is the mean of the other columns
+Column 4 "Mean_Count" is added to the table with rounding to 3 significant figures and saved as a new variable.
+
+The following table shows values for the first six genes.
+```{r, echo=FALSE}
+gene_expression$Mean_Count <- signif(rowMeans(gene_expression), 3)
+Mean_Count <- gene_expression$Mean_Count
+head(gene_expression, 6)
+```
+
+### 3. List the 10 genes with the highest mean expression
+Using the new Mean_Count variable, we create a new data frame subset called "mean_table" comprised of gene identifiers and their mean count values. We then order the data from largest to smallest mean value and display the top 10 genes with highest mean expression. 
+```{r, echo=FALSE}
+mean_table <- data.frame(Gene = rownames(gene_expression), Mean_Count = Mean_Count)
+top10_genes <- mean_table[order(-mean_table$Mean_Count), ][1:10, ]
+top10_genes
+```
+### 4. Determine the number of genes with a mean <10
+We will create a subset called "low_mean" that contains all data with a Mean_count of less than 10. By counting the rows in this subset, we can see that there are 35,988 genes with a mean <10.
+```{r, echo=FALSE}
+low_mean <- subset(gene_expression, Mean_Count < 10)
+nrow(low_mean)
+```
+### 5. Make a histogram plot of the mean values
+Considering the large number of genes with a mean <10, we evaluate the summary statistics of numeric vector "Mean_Count" to assess appropriate histogram parameters. 
+
+```{r, echo=FALSE}
+str(Mean_Count)
+summary(Mean_Count)
+```
+We can see that there is a large range of values from 0.00 to 529,000 in this data set. There is a significant right skew demonstrated by the lower half of the genes (Min-Median) having a range of 0.00-1.33 and the upper half of the genes (Median-Max) extending from 1.33 to 529,000.
+
+Due to these characteristics, it is appropriate to log10 transform the data to visually display a histogram of this data as described by Love *et al.* (2022). As we have known values of 0 in our data set, we add "+1" to the log transformation.
+
+```{r, echo=FALSE}
+hist(log10(Mean_Count + 1),
+     breaks = 30,
+     main = "Distribution of Log10-Transformed Mean Gene Expression",
+     xlab = "log10(Mean Expression + 1)",
+     col = "skyblue",
+     border = "white")
+
+```
+
+
+## Part 1 - Tree growth calculations
+
+The file “growth_data.csv” contains tree circumference measurements for two growth sites, "control site" and "treatment site" as measured over 5 year intervals.
+
+### 6. Import this csv file into an R object. What are the column names?
+Using raw data file from public repository previously listed, the "growth_data" csv file is imported to the project for analysis. 
+
+The column names are listed as follows:
+```{r, echo=FALSE}
+URL="https://raw.githubusercontent.com/ghazkha/Assessment4/refs/heads/main/growth_data.csv"
+ 
+growth <- read.csv(URL)
+cat(colnames(growth), sep = "\n")
+
+```
+### 7. Calculate the mean and standard deviation of tree circumference at the start and end of the study at both sites.
+Using column 3 "Circumf_2005_cm" as the **start of the study**, and column 6 "Circumf_2020_cm" as the **end of the study**, we calculate the mean and standard deviation grouped by the two study sites: "northeast" and "southwest" using **tapply**.
+
+```{r, echo=FALSE}
+# Mean circumference at start and end by site
+mean_start <- tapply(growth$Circumf_2005_cm, growth$Site, mean)
+mean_end <- tapply(growth$Circumf_2020_cm, growth$Site, mean)
+
+# Standard deviation at start and end by site
+sd_start <- tapply(growth$Circumf_2005_cm, growth$Site, sd)
+sd_end <- tapply(growth$Circumf_2020_cm, growth$Site, sd)
+
+# Combine into one table
+summary_table <- data.frame(
+  Site = names(mean_start),
+  Mean_2005 = mean_start,
+  SD_2005 = sd_start,
+  Mean_2020 = mean_end,
+  SD_2020 = sd_end
+)
+knitr::kable(summary_table, caption = "Mean and SD of tree circumference at start and end of study")
+
+```
+
+**Start of the study - 2005**
+The mean tree circumference at the start of the study was 5.29cm with a standard deviation of 0.91 at the northeast site. 
+
+The mean circumference at the start of the study was 4.86cm with a standard deviation of 1.14 at the southwest site.
+
+**End of the study - 2020**
+The mean tree circumference at the end of the study was 54.23cm with a standard deviation of 25.23 at the northeast site. 
+
+The mean circumference at the end of the study was 45.60cm with a standard deviation of 17.87 at the southwest site.
+
+
+### 8. Make a box plot of tree circumference at the start and end of the study at both sites.
+
+The following two boxplots show the tree circumference at the start of the study in 2005 at the northeast and southwest sites.
+
+```{r, echo=FALSE}
+boxplot(Circumf_2005_cm ~ Site, data = growth,
+        main = "Tree circumference at start of study (2005)",
+        ylab = "Circumference (cm)")
+```
+
+The following two boxplots show the tree circumference at the end of the study in 2020 at the northeast and southwest sites.
+```{r, echo=FALSE}
+boxplot(Circumf_2020_cm ~ Site, data = growth,
+        main = "Tree circumference at end of study (2020)",
+        ylab = "Circumference (cm)")
+
+```
+
+
+### 9. Calculate the mean growth over the last 10 years at each site.
+
+We will first calculate the total growth between 2010 and 2020 (last 10 years).
+
+We can then calculate the mean for each site using **tapply**.
+
+```{r, echo=FALSE}
+# Calculate 10-year growth
+growth$Growth_10yr <- growth$Circumf_2020_cm - growth$Circumf_2010_cm
+
+# Mean growth per site
+mean_growth <- tapply(growth$Growth_10yr, growth$Site, mean)
+mean_growth
+
+```
+
+The mean growth over the last 10 years at the northeast site was 42.94cm which was greater than the southwest site which had a mean growth of 35.49cm.
+
+### 10. Use the t.test to estimate the p-value that the 10 year growth is different at the two sites.
+
+Using a two-sample t-test, we evaluate the 10 year growth difference to get a p-value of:
+
+```{r, echo=FALSE}
+t_test_result <- t.test(Growth_10yr ~ Site, data = growth)
+t_test_result$p.value
+```
+
+As p = 0.06 which is greater than 0.05, the growth difference is **not** considered to be significantly different between the two sites.
+
+
+# Part 2 - Examining biological sequence diversity
+
+This report will analyse the biological sequence features of *Salmonella enterica subsp. enterica serovar Weltevreden (GCA_005518735)* and compare it against *Escherichia coli str. K-12 substr. MG1655 str. K12 (GCA_000005845)* in order to examine the biological sequence diversity of the two organisms.
+
+### 1. Download the whole set of coding DNA sequences for E. coli and your organism of interest. How many coding sequences are present in these organisms? Present this in the form of a table. Describe any differences between the two organisms. 
+
+We will be downloading *S. Weltevreden* and *E. coli* genomic sequence data from one of the biggest databases of genomic data - Ensembl <https://bacteria.ensembl.org/index.html>. There are many E. coli strains available in Ensembl, but as previously described, we will focus today on “Escherichia coli str. K-12 substr. MG1655 str. K12 (GCA_000005845)”. 
+
+We will download the sequences into R with the **seqinr** package and decompress them with the **R.utils** package.
+
+```{r load packages, include=FALSE}
+library("seqinr")
+library("R.utils")
+```
+Load *E. coli* and *S. Weltevreden* genomes, unzip and list the files to confirm successful:
+```{r Download Genomes, echo=FALSE}
+
+# Download E. coli Genome
+URL="http://ftp.ensemblgenomes.org/pub/bacteria/release-53/fasta/bacteria_0_collection/escherichia_coli_str_k_12_substr_mg1655_gca_000005845/cds/Escherichia_coli_str_k_12_substr_mg1655_gca_000005845.ASM584v2.cds.all.fa.gz"
+download.file(URL,destfile="ecoli_cds.fa.gz")
+gunzip("ecoli_cds.fa.gz")
+
+# Download S. Weltevreden Genome
+URL2="https://ftp.ensemblgenomes.ebi.ac.uk/pub/bacteria/release-62/fasta/bacteria_50_collection/salmonella_enterica_subsp_enterica_serovar_weltevreden_gca_005518735/cds/Salmonella_enterica_subsp_enterica_serovar_weltevreden_gca_005518735.ASM551873v1.cds.all.fa.gz"
+download.file(URL2,destfile="sweltevreden_cds.fa.gz")
+gunzip("sweltevreden_cds.fa.gz")
+list.files()
+```
+
+We will now read in the fasta files using **seqinr::read.fast()** to create a "cds" list, assess how many coding sequences are present using **length()** for each organism, and finally create a table using the **knitr::kable** function of R to compare the two files.
+
+```{r, echo=FALSE}
+# E. coli
+ecoli_cds <- seqinr::read.fasta("ecoli_cds.fa")
+ecoli_num <- length(ecoli_cds)
+
+# S. weltevreden
+sweltevreden_cds <- seqinr::read.fasta("sweltevreden_cds.fa")
+sweltevreden_num <- length(sweltevreden_cds)
+
+# Combine into table
+num_table <- data.frame(
+  File = c("ecoli_cds.fa", "sweltevreden_cds.fa"),
+  Num_CDS = c(ecoli_num, sweltevreden_num)
+)
+knitr::kable(num_table, caption = "Number of coding sequences in each organism")
+```
+We can see that there are **4239** coding sequences in *E. coli* and **4585** coding sequences in *S. weltevreden* demonstrating that S. weltevreden has more coding sequences than E. coli. 
+
+This difference may be indicative of genome size variation, strain-specific genes, differing regulatory systems or mutations (insertions, deletions, or substitutions of nucleotides), which lead to genetic variation over evolutionary time (Winfield and Groisman, 2004).
+
+
+### 2. How much coding DNA is there in total for these two organisms? Present this in the form of a table. Describe any differences between the two organisms.
+By extracting the gene lengths for each organism using the **summary()** function, we can convert the first column of the output into a numeric vector (e.g., `ecoli_len <- as.numeric(summary(ecoli_cds)[,1])`), before calculating the total length of all genes by summing them.
+
+```{r, echo=FALSE}
+# E. coli
+ecoli_len <- as.numeric(summary(ecoli_cds)[,1])
+ecoli_total <- sum(ecoli_len)
+
+# S. weltevreden
+sweltevreden_len <- as.numeric(summary(sweltevreden_cds)[,1])
+sweltevreden_total <- sum(sweltevreden_len)
+
+# Combine into table
+len_table <- data.frame(
+  Organism = c("E. coli", "S. weltevreden"),
+  Total_Coding_DNA_bp = c(ecoli_total, sweltevreden_total)
+)
+
+knitr::kable(len_table, caption = "Total coding DNA in sample organism genomes")
+```
+We can see that E. coli has **3.98Mbp** of coding DNA and S. weltevreden has **4.29Mbp**.
+
+Whilst both organisms have similar total coding DNA lengths, there are more bp's present in the S. weltevreden genome by approximately 0.316Mbp which may reflect additional genes or a slightly larger genome.
+
+### 3. Calculate the length of all coding sequences in these two organisms. Make a boxplot of coding sequence length in these organisms. What is the mean and median coding sequence length of these two organisms? Describe any differences between the two organisms.
+
+By using the total length object of each respective organism calculated in the previous section, we can add these totals together to produce a new `combined_total` object.
+
+```{r combined total calculation}
+combined_total <- ecoli_total + sweltevreden_total
+combined_total
+```
+This calculation demonstrates a combined total length of all coding sequences in our two organism genomes of **8.27Mbp**.
+
+This combined total is represented by the following boxplot, with individual organism coding sequence length distributions represented below:
+```{r boxplot, echo=FALSE}
+
+boxplot(ecoli_len + sweltevreden_len,
+        ylab="Coding sequence length (bp)",
+        main="Boxplot of total combined organism coding sequence length")
+
+boxplot(ecoli_len,
+        ylab="Coding sequence length (bp)",
+        main="Boxplot of E. coli coding sequence length")
+
+
+boxplot(sweltevreden_len,
+        ylab="Coding sequence length (bp)",
+        main="Boxplot of S. weltevreden coding sequence length")
+
+
+```
+
+The distribution of these boxplots show a right skew with several outliers that lengthen the whiskers towards the upper maximum limits. 
+
+These observations are supported by calculating the mean and median values of individual organisms, and a new combined vector which is created by:
+```{r, echo=TRUE}
+# Combine the lengths into a single vector
+combined_len <- c(ecoli_len, sweltevreden_len)
+```
+
+```{r}
+# Calculate mean combined
+mean_len <- mean(combined_len)
+mean_len
+```
+```{r}
+# Calculate median combined
+median_len <- median(combined_len)
+median_len
+```
+The mean coding sequence length of these two organisms combined is **937.6bp** and the median coding sequence length is **816bp**.
+
+```{r}
+# E. coli
+ecoli_len <- as.numeric(summary(ecoli_cds)[,1])
+mean(ecoli_len)
+median(ecoli_len)
+
+# S. weltevreden
+sweltevreden_len <- as.numeric(summary(sweltevreden_cds)[,1])
+mean(sweltevreden_len)
+median(sweltevreden_len)
+```
+
+
+Individually, E.coli has a mean sequence length of **938.6bp** and median of **831bp**, whilst S. weltevreden mean is slightly lower at **936.7bp** and lower median of **804bp**.
+
+This indicates that although both organisms have similar average gene sizes, S. weltevreden may possess a greater number of shorter coding sequences. Such variation could reflect differences in genome organisation, gene density, or the presence of smaller accessory genes that contribute to environmental adaptation or virulence (McClelland et al., 2001).
+
+
+### 4. Calculate the frequency of DNA bases in the total coding sequences for both organisms. Perform the same calculation for the total protein sequence. Create bar plots for nucleotide and amino acid frequency. Describe any differences between the two organisms.
+
+In order to compute the frequency of DNA bases in the organism coding sequence data sets, we first need to unlist both cds objects, and store the sequences in a "<organism>_dna" variable.
+
+We then calculate the frequency of each nucleotide using `<organism>_composition <- count(<organism>_dna, 1)`, which stores these total counts in <organism>_composition. We can further examine these counts as relative frequency <organism>_proportion using `<organism>_proportion <- <organism>_composition/sum(<organism>_composition)`.
+
+We then visualize the relative frequencies with `barplot(<organism>_proportion, xlab="nucleotides", ylab="frequency", main="<organism> CDS composition")`. This creates a bar plot where the x-axis represents the nucleotides (A, C, G, T), the y-axis shows their relative frequencies, with a plot title detailing which organism is represented.
+
+```{r, echo=FALSE}
+
+ecoli_dna <- unlist(ecoli_cds)
+ecoli_composition <- count(ecoli_dna,1)
+ecoli_proportion <- ecoli_composition/sum(ecoli_composition)
+
+barplot(ecoli_proportion,
+        xlab="nucleotides",
+        ylab="relative frequency", 
+        main="E. coli CDS composition")
+```
+
+```{r, echo=FALSE}
+
+sweltevreden_dna <- unlist(sweltevreden_cds)
+sweltevreden_composition <- count(sweltevreden_dna,1)
+sweltevreden_proportion <- sweltevreden_composition/sum(sweltevreden_composition)
+
+barplot(sweltevreden_proportion,
+        xlab="nucleotides",
+        ylab="relative frequency", 
+        main="S. weltevreden CDS composition")
+```
+
+We can see that both organisms have a very similar composition with the highest proportion of nucleotides being **Guanine (G)** of greater than 25%.
+
+
+**Dear markers:** I have made an error somewhere so my objects are not containing the correct information from this point on. I have tried and tried to troubleshoot and have left off below trying to read the cds back in, translate and then unlist it again. I have included the commands to be used for the next sections but note there is incorrect output.
+
+Thank you for your consideration in part marks.
+
+Below we have read in the cds files for each organism and used **lapply**'s **translate** function to create a list of protein sequences. We attempt to unlist again to replicate the previous successful calculation step to count and quantify the frequency of amino acids.
+```{r}
+ecoli_cds <- seqinr::read.fasta("ecoli_cds.fa")
+ecoli_prot <- lapply(ecoli_cds, translate)
+ecoli_prot_seq <- unlist(ecoli_prot)
+ecoli_aa <- count(ecoli_prot,1)
+ecoli_aa_prop <- ecoli_aa/sum(ecoli_aa)
+ecoli_aa_prop
+
+#barplot(ecoli_aa_prop,
+        #xlab="amino acids",
+        #ylab="relative frequency", 
+        #main="E. coli amino acid composition")
+
+
+sweltevreden_cds <- seqinr::read.fasta("sweltevreden_cds.fa")
+sweltevreden_prot <- lapply(sweltevreden_cds, translate)
+sweltevreden_prot_seq <- unlist(sweltevreden_prot)
+sweltevreden_aa <- count(sweltevreden_prot_seq,1)
+sweltevreden_aa_prop <- sweltevreden_aa / sum(sweltevreden_aa)
+sweltevreden_aa_prop
+
+#barplot(sweltevreden_aa_prop,
+        #xlab="amino acids",
+        #ylab="relative frequency", 
+        #main="S. weltevreden amino acid composition")
+
+```
+
+### 5. Create a codon usage table and quantify the codon usage bias among all coding sequences. Describe any differences between the two organisms with respect to their codon usage bias. Provide charts to support your observations.
+
+Using the **Seqinr** packages command **uco**, we can create a codon usage table for our organisms. 
+
+We can then quantify the codon usage bias by using `index="rscu"` which computes the Relative Synonymous Codon Usage (RSCU) values and expresses how preferred a codon of a particular amino acid is compared to the other codons which also encode it. 
+
+E. coli
+```{r}
+uco(ecoli_cds)
+uco(ecoli_cds,index="rscu")
+```
+S. weltevreden
+```{r}
+uco(sweltevreden_cds)
+uco(sweltevreden_cds,index="rscu")
+```
+
+
+### 6. In the organism of interest, identify 10 protein sequence k-mers of length 3-5 which are the most over- and under-represented k-mers in your organism of interest. Are these k-mers also over- and under-represented in E. coli to a similar extent? Provide plots to support your observations. Why do you think these sequences are present at different levels in the genomes of these organisms?
+
+
+```{r}
+
+```
+
+
+
